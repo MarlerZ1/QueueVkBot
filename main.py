@@ -1,5 +1,5 @@
 import os
-import requests
+from answers import *
 import vk_api
 from rest_requests import RestRequest
 from dotenv import load_dotenv
@@ -16,17 +16,6 @@ def write_msg(user_id, message):
     vk.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': vk_api.utils.get_random_id()})
 
 
-def create_queues_text_answer(content):
-    answer = "Список доступных очередей: \n\n"
-
-    for i in range(len(content)):
-        if i != 0:
-            answer += "\n\n"
-        answer += str(i+1) + ". " + content[i]["name"] + "\n"
-        answer += content[i]["description"]
-
-    return answer
-
 for event in longpoll.listen():
     if event.type == VkEventType.MESSAGE_NEW:
         if event.to_me:
@@ -34,9 +23,17 @@ for event in longpoll.listen():
             if request == "Очередь":
                 content = RestRequest.SpecificQueue.get()
 
-                answer = create_queues_text_answer(content)
+                answer = QueuesAnswer.get_all_queues_answer(content)
                 write_msg(event.user_id, answer)
-            elif request == "пока":
-                write_msg(event.user_id, "Пока((")
+            elif request == "Активно":
+                content = RestRequest.SpecificQueue.get()
+
+                answer = QueuesAnswer.get_active_queues_answer(content)
+                write_msg(event.user_id, answer)
+            elif request == "Неактивно":
+                content = RestRequest.SpecificQueue.get()
+
+                answer = QueuesAnswer.get_inactive_queues_answer(content)
+                write_msg(event.user_id, answer)
             else:
                 write_msg(event.user_id, "Не поняла вашего ответа...")
