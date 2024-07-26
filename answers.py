@@ -6,7 +6,7 @@ class QueuesAnswer:
         for i in range(len(content)):
             if i != 0:
                 answer += "\n\n"
-            answer += str(i + 1) + ". " + content[i]["name"] + "\n"
+            answer += str(content[i]["id"]) + ". " + content[i]["name"] + "\n"
             answer += content[i]["description"] + "\n"
             answer += "Активно: " + ("Да" if content[i]["active"] else "Нет")
 
@@ -20,9 +20,11 @@ class QueuesAnswer:
             if content[i]["active"]:
                 if i != 0:
                     answer += "\n\n"
-                answer += str(i + 1) + ". " + content[i]["name"] + "\n"
+                answer += str(content[i]["id"]) + ". " + content[i]["name"] + "\n"
                 answer += content[i]["description"] + "\n"
-
+        answer += "\n\n"
+        answer += "Чтобы активировать очередь, напишите: Активировать *название очереди или ее номер*\n"
+        answer += "Чтобы деактивировать очередь, напишите: Деактивировать *название очереди или ее номер*\n"
         return answer
 
     @staticmethod
@@ -33,7 +35,7 @@ class QueuesAnswer:
             if not content[i]["active"]:
                 if i != 0:
                     answer += "\n\n"
-                answer += str(i + 1) + ". " + content[i]["name"] + "\n"
+                answer += str(content[i]["id"]) + ". " + content[i]["name"] + "\n"
                 answer += content[i]["description"] + "\n"
 
         return answer
