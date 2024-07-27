@@ -15,6 +15,8 @@ longpoll = VkLongPoll(vk)
 
 admins = json.loads(os.getenv("ADMINS_SREEN_NAME_LIST"))
 print(admins)
+
+
 def write_msg(user_id: int, message: str) -> None:
     vk.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': vk_api.utils.get_random_id()})
 
@@ -23,7 +25,7 @@ for event in longpoll.listen():
     if event.type == VkEventType.MESSAGE_NEW:
         if event.to_me:
             request = event.text.strip()
-            if request.lower() == "очередь":
+            if request.lower() == "лист":
                 content = RestRequest.SpecificQueue.get()
 
                 answer = QueuesAnswer.get_all_queues_answer(content)
@@ -48,7 +50,7 @@ for event in longpoll.listen():
                     else:
                         new_state = False
                         request = request[14:]
-                        
+
                     if not request:
                         write_msg(event.user_id, "Вы не указали очередь")
                     else:
@@ -57,5 +59,31 @@ for event in longpoll.listen():
                         write_msg(event.user_id, answer)
                 else:
                     write_msg(event.user_id, "У вас нет прав для этого действия")
+            elif request.lower()[:7] == "очередь":
+                request = request[7:].strip()
+                if not request:
+                    write_msg(event.user_id, "Вы не указали очередь")
+                else:
+                    if request.isdigit():
+                        rest_object = RestRequest.SpecificQueue.get(queue_id=int(request))
+                        if rest_object.get('detail') != 'No SpecificQueue matches the given query.':
+                            members = RestRequest.Members.get(data={"specific_queue": int(request)})
+
+                            answer = MembersAnswer.get_members_answer(members)
+                            write_msg(event.user_id, answer)
+                        else:
+                            write_msg(event.user_id, f"Очередь #{request} не существует\n")
+                    else:
+                        content = RestRequest.SpecificQueue.get()
+                        for queue in content:
+                            if queue["name"].strip() == request:
+                                members = RestRequest.Members.get(data={"specific_queue": int(request)})
+                                answer = MembersAnswer.get_members_answer(members)
+                                write_msg(event.user_id, answer)
+                                break
+                        else:
+                            write_msg(event.user_id, f"Очередь #{request} не существует\n")
+
+
             else:
                 write_msg(event.user_id, "Не поняла вашего ответа...")

@@ -76,3 +76,18 @@ class QueuesAnswer:
                 answer += f"Очередь #{queue_name} не существует\n"
 
         return answer
+
+
+class MembersAnswer:
+    @staticmethod
+    def get_members_answer(content: json) -> str:
+        if len(content) > 0:
+            answer = "Список участников очереди: \n\n"
+
+            for i in range(len(content)):
+                if i != 0:
+                    answer += "\n\n"
+                answer += str(i + 1) + ". " + content[i]["name"] + "\n"
+        else:
+            answer = "Данная очередь пуста."
+        return answer
