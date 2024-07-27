@@ -16,7 +16,47 @@ longpoll = VkBotLongPoll(vk, os.getenv("GROUP_ID"))
 
 admins = json.loads(os.getenv("ADMINS_SREEN_NAME_LIST"))
 
-request_prefix = F'[club{os.getenv("GROUP_ID")}|os.getenv("GROUP_NAME")]'
+request_prefix = F'[club{os.getenv("GROUP_ID")}|{os.getenv("GROUP_NAME")}]'
+print(request_prefix)
+chats_current_active_queue = {}
+
+
+def change_active_state(queue_id, queue_name, new_state):
+    RestRequest.SpecificQueue.patch(queue_id=queue_id, data={'active': new_state})
+    write_msg(event.message.peer_id,
+              f"Очередь #{queue_name if queue_name else queue_id} {'де' if not new_state else ''}активирована")
+
+
+def choose_queue(queue_id, queue_name):
+    chats_current_active_queue[event.message.peer_id] = queue_id
+    write_msg(event.message.peer_id, f"Очередь #{queue_name if queue_name else queue_id} выбрана")
+
+
+def print_queue(queue_id, queue_name):
+    members = RestRequest.Members.get(data={"specific_queue": queue_id})
+    answer = MembersAnswer.get_members_answer(members, queue_id, queue_name)
+    write_msg(event.message.peer_id, answer)
+
+
+def request_queue_exists_checker(request, callback, **kwargs):
+    request = request.strip()
+    if not request:
+        write_msg(event.message.peer_id, "Вы не указали очередь")
+    else:
+        if request.isdigit():
+            rest_object = RestRequest.SpecificQueue.get(queue_id=int(request))
+            if rest_object.get('detail') != 'No SpecificQueue matches the given query.':
+                callback(queue_id=int(request), queue_name=rest_object["name"], **kwargs)
+            else:
+                write_msg(event.message.peer_id, f"Очередь #{request} не существует\n")
+        else:
+            content = RestRequest.SpecificQueue.get()
+            for queue in content:
+                if queue["name"].strip() == request:
+                    callback(queue_id=int(queue["id"]), queue_name=request, **kwargs)
+                    break
+            else:
+                write_msg(event.message.peer_id, f"Очередь #{request} не существует\n")
 
 
 def write_msg(peer_id: int, message: str) -> None:
@@ -55,37 +95,17 @@ for event in longpoll.listen():
                     new_state = False
                     request = request[14:]
 
-                if not request:
-                    write_msg(event.message.peer_id, "Вы не указали очередь")
-                else:
-                    queues_to_activate = list(map(str.strip, request.split(',')))
-                    answer = QueuesAnswer.get_activity_change_attempt_answer(queues_to_activate, new_state)
-                    write_msg(event.message.peer_id, answer)
+                request_queue_exists_checker(request, change_active_state, new_state=new_state)
             else:
                 write_msg(event.message.peer_id, "У вас нет прав для этого действия")
         elif request.lower()[:7] == "очередь":
-            request = request[7:].strip()
-            if not request:
-                write_msg(event.message.peer_id, "Вы не указали очередь")
-            else:
-                if request.isdigit():
-                    rest_object = RestRequest.SpecificQueue.get(queue_id=int(request))
-                    if rest_object.get('detail') != 'No SpecificQueue matches the given query.':
-                        members = RestRequest.Members.get(data={"specific_queue": int(request)})
+            request = request[7:]
 
-                        answer = MembersAnswer.get_members_answer(members)
-                        write_msg(event.message.peer_id, answer)
-                    else:
-                        write_msg(event.message.peer_id, f"Очередь #{request} не существует\n")
-                else:
-                    content = RestRequest.SpecificQueue.get()
-                    for queue in content:
-                        if queue["name"].strip() == request:
-                            members = RestRequest.Members.get(data={"specific_queue": int(request)})
-                            answer = MembersAnswer.get_members_answer(members)
-                            write_msg(event.message.peer_id, answer)
-                            break
-                    else:
-                        write_msg(event.message.peer_id, f"Очередь #{request} не существует\n")
+            request_queue_exists_checker(request, print_queue)
+
+        elif request.lower()[:7] == "выбрать":
+            request = request[7:]
+
+            request_queue_exists_checker(request, choose_queue)
         else:
             write_msg(event.message.peer_id, "Не поняла вашего ответа...")

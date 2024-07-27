@@ -1,5 +1,3 @@
-from rest_requests import RestRequest
-from typing import *
 import json
 
 
@@ -45,44 +43,12 @@ class QueuesAnswer:
 
         return answer
 
-    @staticmethod
-    def get_activity_change_attempt_answer(queues_to_activate: List[str], new_state: bool) -> str:
-        answer = ""
-        queue_names = []
-        has_strings = False
-
-        for queue in queues_to_activate:
-            if queue.isdigit():
-                rest_object = RestRequest.SpecificQueue.get(queue_id=int(queue))
-                if rest_object.get('detail') != 'No SpecificQueue matches the given query.':
-
-                    RestRequest.SpecificQueue.patch(queue_id=int(queue), data={'active': new_state})
-                    answer += f"Очередь '{rest_object['name']}' #{rest_object['id']} {'де' if not new_state else ''}активирована\n"
-                else:
-                    answer += f"Очередь #{queue} не существует\n"
-            else:
-                has_strings = True
-                queue_names.append(queue)
-
-        if has_strings:
-            content = RestRequest.SpecificQueue.get()
-
-            for queue in content:
-                if queue["name"].strip() in queue_names:
-                    RestRequest.SpecificQueue.patch(queue_id=int(queue["id"]), data={'active': new_state})
-                    queue_names.remove(queue["name"])
-                    answer += f"Очередь '{queue['name']}' #{queue['id']} {'де' if not new_state else ''}активирована\n"
-            for queue_name in queue_names:
-                answer += f"Очередь #{queue_name} не существует\n"
-
-        return answer
-
 
 class MembersAnswer:
     @staticmethod
-    def get_members_answer(content: json) -> str:
+    def get_members_answer(content: json, queue_id: int, queue_name: str) -> str:
         if len(content) > 0:
-            answer = "Список участников очереди: \n\n"
+            answer = f"Список участников очереди {queue_name} #{queue_id}: \n\n"
 
             for i in range(len(content)):
                 if i != 0:
