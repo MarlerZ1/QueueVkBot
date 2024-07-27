@@ -107,5 +107,26 @@ for event in longpoll.listen():
             request = request[7:]
 
             request_queue_exists_checker(request, choose_queue)
+        elif request.lower() in ['+', 'я', 'фиксирую', '.']:
+            if chats_current_active_queue.get(event.message.peer_id):
+                queue = RestRequest.SpecificQueue.get(queue_id=chats_current_active_queue[event.message.peer_id])
+                print(queue)
+                if queue["active"]:
+                    user_data = api_vk.users.get(user_ids=event.message.from_id)[0]
+                    username = user_data["first_name"] + " " + user_data["last_name"]
+
+                    rest_user = RestRequest.Members.get(
+                        data={"specific_queue": chats_current_active_queue[event.message.peer_id],
+                              "name": username})
+                    if rest_user:
+                        write_msg(event.message.peer_id, f"Вы уже есть в этой очереди, {username}")
+                    else:
+                        RestRequest.Members.post(data={'name': username, 'specific_queue': chats_current_active_queue[event.message.peer_id]})
+                        write_msg(event.message.peer_id, f"{username} добавлен")
+                else:
+                    write_msg(event.message.peer_id,
+                              "Очередь не активирована. Для добавления в очередь, активируйте ее или подождите активации от администратора")
+            else:
+                write_msg(event.message.peer_id, "Вы не выбрали очередь")
         else:
             write_msg(event.message.peer_id, "Не поняла вашего ответа...")
