@@ -32,7 +32,6 @@ class RestRequest:
         def get(member_id: Union[int, None] = None, data: Union[dict, None] = None) -> json:
             rest_response = requests.get(
                 RestRequest.Members.get_url() + (f"{str(member_id)}" if member_id else ""), params=data)
-            print(rest_response.url)
             content = rest_response.json()
             return content
 

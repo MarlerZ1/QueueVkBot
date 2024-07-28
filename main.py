@@ -135,12 +135,23 @@ for event in longpoll.listen():
                         data={"specific_queue": chats_current_active_queue[event.message.peer_id]})
                     if len(members) != 0:
                         RestRequest.Members.delete(member_id=members[0]["id"])
-                        write_msg(event.message.peer_id,f"{members[0]['name']} удален из очереди")
+                        write_msg(event.message.peer_id, f"{members[0]['name']} удален из очереди")
                     else:
                         write_msg(event.message.peer_id, f"Очередь пуста")
                 else:
-                    write_msg(event.message.peer_id,"Вы не выбрали очередь")
+                    write_msg(event.message.peer_id, "Вы не выбрали очередь")
             else:
                 write_msg(event.message.peer_id, "У вас нет прав для этого действия")
+        elif request.lower() in ['команды', 'help']:
+            answer = "1. Лист - посмотреть список очередей\n"
+            answer += "2. Активно - посмотреть список активных очередей\n"
+            answer += "3. Неактивно - посмотреть список неактивных очередей\n"
+            answer += "4. Активировать/Деактивировать *номер очереди или название*- включить или выключить очередь (admins only)\n"
+            answer += "5. Очередь *номер очереди или название* - вывести всех участников очереди\n"
+            answer += "6. Выбрать *номер очереди или название* - выбрать очередь для записи или удаления участника (admins only)\n"
+            answer += "7. '+', 'я', 'фиксирую', '.' - добавить себя в очередь. Сначала нужно выбрать очередь (6). Если вы уже есть в очереди, то вас не добавят заново \n"
+            answer += "8. 'pop', 'поп', '-' - убрать первого участника очереди. Сначала нужно выбрать очередь (6) \n"
+
+            write_msg(event.message.peer_id, answer)
         else:
             write_msg(event.message.peer_id, "Не поняла вашего ответа...")
