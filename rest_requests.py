@@ -20,7 +20,7 @@ class RestRequest:
 
         @staticmethod
         def patch(queue_id: int, data: dict) -> int:
-            rest_response = requests.patch(RestRequest.SpecificQueue.get_url()  + str(queue_id) + "/", data=data)
+            rest_response = requests.patch(RestRequest.SpecificQueue.get_url() + str(queue_id) + "/", data=data)
             return rest_response.status_code
 
     class Members:
@@ -39,4 +39,8 @@ class RestRequest:
         @staticmethod
         def post(data: dict) -> int:
             rest_response = requests.post(RestRequest.Members.get_url(), data=data)
+            return rest_response.status_code
+
+        def delete(member_id: id) -> int:
+            rest_response = requests.delete(RestRequest.Members.get_url() + str(member_id))
             return rest_response.status_code

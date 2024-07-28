@@ -110,7 +110,6 @@ for event in longpoll.listen():
         elif request.lower() in ['+', 'я', 'фиксирую', '.']:
             if chats_current_active_queue.get(event.message.peer_id):
                 queue = RestRequest.SpecificQueue.get(queue_id=chats_current_active_queue[event.message.peer_id])
-                print(queue)
                 if queue["active"]:
                     user_data = api_vk.users.get(user_ids=event.message.from_id)[0]
                     username = user_data["first_name"] + " " + user_data["last_name"]
@@ -121,12 +120,27 @@ for event in longpoll.listen():
                     if rest_user:
                         write_msg(event.message.peer_id, f"Вы уже есть в этой очереди, {username}")
                     else:
-                        RestRequest.Members.post(data={'name': username, 'specific_queue': chats_current_active_queue[event.message.peer_id]})
+                        RestRequest.Members.post(data={'name': username, 'specific_queue': chats_current_active_queue[
+                            event.message.peer_id]})
                         write_msg(event.message.peer_id, f"{username} добавлен")
                 else:
                     write_msg(event.message.peer_id,
                               "Очередь не активирована. Для добавления в очередь, активируйте ее или подождите активации от администратора")
             else:
                 write_msg(event.message.peer_id, "Вы не выбрали очередь")
+        elif request.lower() in ['pop', 'поп', '-']:
+            if api_vk.users.get(user_ids=event.message.from_id, fields=["screen_name", ])[0]["screen_name"] in admins:
+                if chats_current_active_queue.get(event.message.peer_id):
+                    members = RestRequest.Members.get(
+                        data={"specific_queue": chats_current_active_queue[event.message.peer_id]})
+                    if len(members) != 0:
+                        RestRequest.Members.delete(member_id=members[0]["id"])
+                        write_msg(event.message.peer_id,f"{members[0]['name']} удален из очереди")
+                    else:
+                        write_msg(event.message.peer_id, f"Очередь пуста")
+                else:
+                    write_msg(event.message.peer_id,"Вы не выбрали очередь")
+            else:
+                write_msg(event.message.peer_id, "У вас нет прав для этого действия")
         else:
             write_msg(event.message.peer_id, "Не поняла вашего ответа...")
